@@ -57,7 +57,7 @@ def main():
 	download_modpack(url, file_name)
 	extract_modpack(tmp_path, file_name)
 	launch_forge_installer(tmp_path)
-	minecraft_path = Path(os.path.expandvars("%appdata%./minecraft"))
+	minecraft_path = Path(os.path.expandvars("%appdata%/.minecraft"))
 	update_launcher_profiles(minecraft_path)
 	copy_mods(tmp_path / "Modpack", minecraft_path)
 	shutil.rmtree(tmp_path)
