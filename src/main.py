@@ -8,6 +8,7 @@ import json
 import codecs
 from pathlib import Path
 from dotenv import load_dotenv
+import sys
 
 class InstallerConfig:
 
@@ -60,7 +61,7 @@ def copy_mods(modpack_path: Path, game_path: Path):
 
 
 def main():
-	load_dotenv(Path(__file__).parent.parent / ".env")
+	load_dotenv(Path(os.path.abspath(sys.argv[0])).parent / ".env")
 	config = InstallerConfig()
 	url = config.modpack_drive_uri
 	tmp_path = Path("./tmp")
