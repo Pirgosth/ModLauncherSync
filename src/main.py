@@ -14,6 +14,7 @@ class InstallerConfig:
 
 	def __init__(self) -> None:
 		self.minecraft_path: str = os.getenv("MINECRAFT_PATH")
+		self.profile_name: str = os.getenv("PROFILE_NAME")
 		self.profile_image: str = os.getenv("PROFILE_IMAGE_BASE64")
 		self.forge_version: str = os.getenv("FORGE_VERSION")
 		self.forge_jar_file: str = os.getenv("FORGE_JAR_FILE")
@@ -41,24 +42,32 @@ def update_launcher_profiles(game_path: Path, config: InstallerConfig):
 	profile_json_path = game_path / "launcher_profiles.json"
 	with codecs.open(profile_json_path, 'r+', encoding='utf-8') as stream:
 		data = json.load(stream)
-		data['profiles']['MPAP'] = {
+		data['profiles'][config.profile_name] = {
 			"icon" : f"data:image/png;base64,{config.profile_image}",
-			"gameDir" : f"{(game_path / 'profiles' / 'MPAP').absolute()}",
-			"javaArgs" : "-Xms2G -Xmx4G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M",
+			"gameDir" : f"{(game_path / 'profiles' / config.profile_name).absolute()}",
+			"javaArgs" : "-Xms6G -Xmx8G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M",
 			"lastVersionId" : config.forge_version,
-			"name" : "MPAP",
+			"name" : config.profile_name,
 			"type" : "custom"
 		}
 		stream.seek(0)
 		json.dump(data, stream, indent=2)
 		stream.truncate()
 		
-def copy_mods(modpack_path: Path, game_path: Path):
-	dist_mods_folder = game_path / "profiles" / "MPAP" / "mods"
+def copy_mods(modpack_path: Path, game_path: Path, config: InstallerConfig):
+	dist_mods_folder = game_path / "profiles" / config.profile_name / "mods"
 	os.makedirs(dist_mods_folder, exist_ok=True)
 	shutil.rmtree(dist_mods_folder)
 	shutil.copytree(modpack_path / "mods", dist_mods_folder)
 
+def copy_default_configs(modpack_path: Path, game_path: Path, config: InstallerConfig):
+	if not (modpack_path / "defaultconfigs").exists():
+		return
+
+	dist_defaultconfigs_folder = game_path / "profiles" / config.profile_name / "defaultconfigs"
+	os.makedirs(dist_defaultconfigs_folder, exist_ok=True)
+	shutil.rmtree(dist_defaultconfigs_folder)
+	shutil.copytree(modpack_path / "defaultconfigs", dist_defaultconfigs_folder)
 
 def main():
 	load_dotenv(Path(os.path.abspath(sys.argv[0])).parent / ".env")
@@ -73,7 +82,8 @@ def main():
 	launch_forge_installer(tmp_path, config)
 	minecraft_path = Path(os.path.expandvars(config.minecraft_path))
 	update_launcher_profiles(minecraft_path, config)
-	copy_mods(tmp_path / "Modpack", minecraft_path)
+	copy_mods(tmp_path / "Modpack", minecraft_path, config)
+	copy_default_configs(tmp_path / "Modpack", minecraft_path, config)
 	shutil.rmtree(tmp_path)
 	
 
