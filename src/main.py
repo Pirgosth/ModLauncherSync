@@ -45,7 +45,7 @@ def update_launcher_profiles(game_path: Path, config: InstallerConfig):
 		data['profiles'][config.profile_name] = {
 			"icon" : f"data:image/png;base64,{config.profile_image}",
 			"gameDir" : f"{(game_path / 'profiles' / config.profile_name).absolute()}",
-			"javaArgs" : "-Xms6G -Xmx8G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M",
+			"javaArgs" : "-Xms8G -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M",
 			"lastVersionId" : config.forge_version,
 			"name" : config.profile_name,
 			"type" : "custom"
@@ -58,16 +58,20 @@ def copy_mods(modpack_path: Path, game_path: Path, config: InstallerConfig):
 	dist_mods_folder = game_path / "profiles" / config.profile_name / "mods"
 	os.makedirs(dist_mods_folder, exist_ok=True)
 	shutil.rmtree(dist_mods_folder)
-	shutil.copytree(modpack_path / "mods", dist_mods_folder)
+	shutil.copytree(modpack_path / "mods", dist_mods_folder, ignore=shutil.ignore_patterns("client-only"))
+	shutil.copytree(modpack_path / "mods" / "client-only", dist_mods_folder, dirs_exist_ok=True)
 
 def copy_default_configs(modpack_path: Path, game_path: Path, config: InstallerConfig):
-	if not (modpack_path / "defaultconfigs").exists():
+	if not (modpack_path / "config").exists():
 		return
 
-	dist_defaultconfigs_folder = game_path / "profiles" / config.profile_name / "defaultconfigs"
-	os.makedirs(dist_defaultconfigs_folder, exist_ok=True)
-	shutil.rmtree(dist_defaultconfigs_folder)
-	shutil.copytree(modpack_path / "defaultconfigs", dist_defaultconfigs_folder)
+	dist_config_folder = game_path / "profiles" / config.profile_name / "config"
+	
+	# Only copy config on first installation
+	if dist_config_folder.exists():
+		return
+	
+	shutil.copytree(modpack_path / "config", dist_config_folder)
 
 def main():
 	load_dotenv(Path(os.path.abspath(sys.argv[0])).parent / ".env")
