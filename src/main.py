@@ -59,7 +59,8 @@ def copy_mods(modpack_path: Path, game_path: Path, config: InstallerConfig):
 	os.makedirs(dist_mods_folder, exist_ok=True)
 	shutil.rmtree(dist_mods_folder)
 	shutil.copytree(modpack_path / "mods", dist_mods_folder, ignore=shutil.ignore_patterns("client-only"))
-	shutil.copytree(modpack_path / "mods" / "client-only", dist_mods_folder, dirs_exist_ok=True)
+	if (modpack_path / "mods" / "client-only").exists():
+		shutil.copytree(modpack_path / "mods" / "client-only", dist_mods_folder, dirs_exist_ok=True)
 
 def copy_default_configs(modpack_path: Path, game_path: Path, config: InstallerConfig):
 	if not (modpack_path / "config").exists():
@@ -67,11 +68,34 @@ def copy_default_configs(modpack_path: Path, game_path: Path, config: InstallerC
 
 	dist_config_folder = game_path / "profiles" / config.profile_name / "config"
 	
-	# Only copy config on first installation
-	if dist_config_folder.exists():
+	shutil.copytree(modpack_path / "config", dist_config_folder, dirs_exist_ok=True)
+
+def copy_emotes(modpack_path: Path, game_path: Path, config: InstallerConfig):
+	if not (modpack_path / "emotes").exists():
+		return
+
+	dist_config_folder = game_path / "profiles" / config.profile_name / "emotes"
+	
+	shutil.copytree(modpack_path / "emotes", dist_config_folder, dirs_exist_ok=True)
+
+def copy_shaders(modpack_path: Path, game_path: Path, config: InstallerConfig):
+	if not (modpack_path / "shaderpacks").exists():
+		return
+
+	dist_config_folder = game_path / "profiles" / config.profile_name / "shaderpacks"
+	
+	shutil.copytree(modpack_path / "shaderpacks", dist_config_folder, dirs_exist_ok=True)
+
+def copy_options(modpack_path: Path, game_path: Path, config: InstallerConfig):
+	if not (modpack_path / "options.txt").exists():
+		return
+
+	dist_options = game_path / "profiles" / config.profile_name / "options.txt"
+	if dist_options.exists():
+		# Only copy if initial config does not exist.
 		return
 	
-	shutil.copytree(modpack_path / "config", dist_config_folder)
+	shutil.copy2(modpack_path / "options.txt", dist_options)
 
 def main():
 	load_dotenv(Path(os.path.abspath(sys.argv[0])).parent / ".env")
@@ -88,6 +112,9 @@ def main():
 	update_launcher_profiles(minecraft_path, config)
 	copy_mods(tmp_path / "Modpack", minecraft_path, config)
 	copy_default_configs(tmp_path / "Modpack", minecraft_path, config)
+	copy_emotes(tmp_path / "Modpack", minecraft_path, config)
+	copy_shaders(tmp_path / "Modpack", minecraft_path, config)
+	copy_options(tmp_path / "Modpack", minecraft_path, config)
 	shutil.rmtree(tmp_path)
 	
 
